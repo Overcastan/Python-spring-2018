@@ -1,7 +1,8 @@
 import glob
 import re
 
-Source = ('/Users/BKV-201/Desktop/Sources/*.txt')
+print('Specify the path to the directory: ')
+Source = input()
 files = glob.glob(pathname = Source)
 w = {}
 for name in files:
@@ -31,7 +32,9 @@ for name in files:
                         else:
                             w[l[i]][l[i + 1]] = 1
 
-model = open(r'/Users/BKV-201/Desktop/Models/model.txt', 'w', encoding='utf-16')    # Записываем полученный
+print('Specify the path to the model: ')
+model_path = input()
+model = open(model_path, 'w', encoding='utf-16')                                    # Записываем полученный
 model.write(str(w))                                                                 # словарь в models
 model.close()
 
