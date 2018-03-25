@@ -1,7 +1,9 @@
 import random
 import json
 
-model = open(r'/Users/BKV-201/Desktop/Models/model.txt', 'r', encoding='utf-16')
+print('Specify the path to the model: ')
+model_path = input()
+model = open(model_path, 'r', encoding='utf-16')
 corpusstr = model.read()
 corpus = json.loads(corpusstr)                                              # получаем словарь
 
