@@ -1,0 +1,39 @@
+import glob
+import re
+
+Source = ('/Users/BKV-201/Desktop/Sources/*.txt')
+files = glob.glob(pathname = Source)
+w = {}
+for name in files:
+    with open(name, encoding='utf-16') as f:
+        for line in f:                                                              # приводим строку к
+                                                                                    # адекватному виду
+            l = line.lower()
+            l = re.sub(r'[^\w\s]', '', l)
+            l = l.split()
+
+            i = 0
+            for i in range(len(l)):                                                 # заполняем словарь словарей
+                if l[i] not in w :
+                    if i == len(l) - 1:
+                        w[l[i]] = dict({'END': 1})
+                    else:
+                        w[l[i]] = dict({l[i + 1]: 1})
+                else:
+                    if i == len(l) - 1:
+                        if 'END' in w[l[i]]:
+                            w[l[i]]['END'] += 1
+                        else:
+                            w[l[i]]['END'] = 1
+                    else:
+                        if l[i + 1] in w[l[i]]:
+                            w[l[i]][l[i + 1]] += 1
+                        else:
+                            w[l[i]][l[i + 1]] = 1
+
+model = open(r'/Users/BKV-201/Desktop/Models/model.txt', 'w', encoding='utf-16')    # Записываем полученный
+model.write(str(w))                                                                 # словарь в models
+model.close()
+
+
+
