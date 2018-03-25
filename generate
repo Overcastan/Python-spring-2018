@@ -1,0 +1,26 @@
+import random
+import json
+
+model = open(r'/Users/BKV-201/Desktop/Models/model.txt', 'r', encoding='utf-16')
+corpusstr = model.read()
+corpus = json.loads(corpusstr)                                              # получаем словарь
+
+l = int(input())                                                            # вводим количество слов
+first_word = input()                                                        # и первое слово
+
+print(first_word.capitalize(), end=' ')
+keys = corpus[first_word].keys()
+keys = list(keys)
+choosen = random.choice(keys)
+
+for i in range(l-1):                                                        # рандомно выбираем следующее слово
+    print(choosen, end=' ')
+    next_keys = corpus[choosen].keys()
+    next_k = list(next_keys)
+    choosen = random.choice(next_k)
+    if next_k != ['END']:                                                   # если следующее слово END - перевыбираем
+        while choosen == 'END':                                             # если кроме END ничего нет -
+            choosen = random.choice(next_k)                                 # останавливаем выбор
+    else:
+        break
+
