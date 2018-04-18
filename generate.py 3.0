@@ -1,0 +1,42 @@
+import random
+import json
+import argparse
+
+def generate(args):
+    model = open(args.model, 'r', encoding='utf-16') # открываем модель и считываем словарь
+    corpusstr = model.read()
+    corpus = json.loads(corpusstr)
+
+    output = args.seed + ' '
+    keys = corpus[args.seed].keys()
+    keys = list(keys)
+    choosen = random.choice(keys)
+
+    for i in range(args.length - 1):
+        output += choosen + ' '
+        next_keys = corpus[choosen].keys()
+        next_k = list(next_keys)
+        choosen = random.choice(next_k)
+        if next_k != ['END']:
+            while choosen == 'END':
+                choosen = random.choice(next_k)
+        else:
+            break
+    return output;
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-model', '--model', default=None, help='Specify the path to the directory', required=True)
+    parser.add_argument('-length', '--length', type=int)
+    parser.add_argument('-seed', '--seed')
+    parser.add_argument('-output', '--output')
+    return parser.parse_args()
+
+def main():
+    args_namespace = parse_args()
+    Output_list = generate(args_namespace)
+    model = open(args_namespace.output, 'w', encoding='utf-16')  # Записываем итоговый текст в файл
+    model.write(Output_list)
+    model.close()
+
+main()
