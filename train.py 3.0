@@ -1,0 +1,58 @@
+import glob
+import re
+import json
+import argparse
+
+def model_creation(file, words, args):
+    for line in file:
+        if args.lc == 1:
+            ClearedLine = line.lower()
+        ClearedLine = re.sub(r'[^\w\s]', '', line)
+        ClearedLine = ClearedLine.split()
+
+        i = 0
+        for pos, val in enumerate(ClearedLine):  # заполняем словарь словарей
+            if ClearedLine[pos] not in words:
+                if pos == len(ClearedLine) - 1:
+                    words[ClearedLine[pos]] = dict({'END': 1})
+                else:
+                    words[ClearedLine[pos]] = dict({ClearedLine[pos + 1]: 1})
+            else:
+                if pos == len(ClearedLine) - 1:
+                    if 'END' in words[ClearedLine[pos]]:
+                        words[ClearedLine[pos]]['END'] += 1
+                    else:
+                        words[ClearedLine[pos]]['END'] = 1
+                else:
+                    if ClearedLine[pos + 1] in words[ClearedLine[pos]]:
+                        words[ClearedLine[pos]][ClearedLine[pos + 1]] += 1
+                    else:
+                        words[ClearedLine[pos]][ClearedLine[pos + 1]] = 1
+
+
+def parse_from_path(args, words):
+    files = glob.glob(pathname=args.input_dir)
+    for name in files:
+        with open(name, encoding='utf-16') as file:
+            model_creation(file, words, args)
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-input_dir', '--input_dir', help='Specify the path to the directory', required=True)
+    parser.add_argument('-model', '--model', default=None, help='Specify the path to the directory', required=True)
+    parser.add_argument('-lc', '--lc', action="store_true", help='Switch letters to lowercase')
+    return parser.parse_args()
+
+def main():
+    words = {}
+    args_namespace = parse_args()
+    if args_namespace.input_dir:
+        parse_from_path(args_namespace, words)
+    else:
+        print("Exit code = 0")
+    model = open(args_namespace.model, 'w', encoding='utf-16')  # Записываем полученный словарь
+    JsonWords = json.dumps(words)
+    model.write(JsonWords)
+    model.close()
+
+main()
