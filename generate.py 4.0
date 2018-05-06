@@ -1,0 +1,54 @@
+import random
+import json
+import argparse
+
+def generate(args):
+    model = open(args.model, 'r') # открываем модель и считываем словарь
+    corpus_str = model.read()
+    corpus = json.loads(corpus_str)
+    output_list = list()
+    if args.seed == None or args.seed not in corpus:
+        random_seed_list = list(corpus.keys())
+        random_seed = random.choice(random_seed_list)
+        output_list.append(random_seed)
+        keys = corpus[random_seed].keys()
+        keys = list(keys)
+        chosen = random.choice(keys)
+    else:
+        output_list.append(args.seed)
+        keys = corpus[args.seed].keys()
+        keys = list(keys)
+        chosen = random.choice(keys)
+
+    for i in range(args.length - 1):
+        output_list.append(chosen)
+        next_keys = corpus[chosen].keys()
+        next_keys_list = list(next_keys)
+        chosen = random.choice(next_keys_list)
+        if next_keys_list != ['END']:                   #Я не стал заворачивать эту часть кода в функцию, так как она
+            while chosen == 'END':                      #отличается от похожей в проверке seed, ведь там у меня
+                chosen = random.choice(next_keys_list)  #грантировано найдется что-то кроме END, чего нет здесь
+        else:
+            break
+    return output_list
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-model', '--model', default = None, help='Specify the path to the directory', required = True)
+    parser.add_argument('-length', '--length', type = int)
+    parser.add_argument('-seed', '--seed')
+    parser.add_argument('-output', '--output')
+    return parser.parse_args()
+
+def main():
+    args_namespace = parse_args()
+    output_list = generate(args_namespace)
+    output_str = ' '.join(output_list)
+    if args_namespace.output == None:
+        print(output_str)
+    else:
+        model = open(args_namespace.output, 'w')  # Записываем итоговый текст в файл
+        model.write(output_str)
+        model.close()
+
+main()
