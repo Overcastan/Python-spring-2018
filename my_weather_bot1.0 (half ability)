@@ -1,0 +1,133 @@
+import requests
+import sqlite3
+import datetime
+
+# conn = sqlite3.connect('City_weather.db')
+# cur = conn.cursor()
+#
+# cur.execute('''
+#     DROP TABLE Weather;
+# ''')
+#
+# cur.execute('''
+#     CREATE TABLE Weather (
+#         CITY VARCHAR(255),
+#         DAY DATE,
+#         TEMPERATURE INTEGER
+#     )
+# ''')
+#
+# conn.commit()
+# conn.close()
+
+errorMessage = 'Не могу распознать город. Попробуйте уточнить его название и ввести еще раз.'
+helpMessage = 'Используй команду /cweather <искомый город>, чтобы получить текущую погоду. В дальнейшем будет добавлена ' \
+              'опция /forecast <искомый город>, позволяющая смотреть прогноз.'
+
+class Weather_bot:
+    def __init__(self, token):
+        self.token = token
+        self.api_url = "https://api.telegram.org/bot571022967:AAGubDpB5mzx2DZ8ljJVEnpZ0uhNV68RCGM/".format(token)
+
+    def get_updates(self, offset=None, timeout=30):
+        method = 'getUpdates'
+        params = {'timeout': timeout, 'offset': offset}
+        resp = requests.get(self.api_url + method, params)
+        result_json = resp.json()['result']
+        return result_json
+
+    def send_message(self, chat_id, text):
+        params = {'chat_id': chat_id, 'text': text}
+        method = 'sendMessage'
+        resp = requests.post(self.api_url + method, params)
+        return resp
+
+    def get_last_update(self):
+        get_result = self.get_updates()
+
+        if len(get_result) > 0:
+            last_update = get_result[-1]
+        else:
+            last_update = get_result[len(get_result)]
+        return last_update
+
+weather_bot = Weather_bot("571022967:AAGubDpB5mzx2DZ8ljJVEnpZ0uhNV68RCGM")
+
+def main():
+    new_offset = None
+    while True:
+        now = datetime.datetime.now()
+        today = now.day
+        last_chat_text = None
+
+        try:
+            update = weather_bot.get_updates(new_offset)
+            if (update == {}):
+                continue
+            last_update = weather_bot.get_last_update()
+        except Exception:
+            continue
+
+        last_update_id = last_update['update_id']
+        last_chat_text = last_update['message']['text']
+        last_chat_id = last_update['message']['chat']['id']
+        last_chat_name = last_update['message']['chat']['first_name']
+
+        try:
+            update = weather_bot.get_updates(new_offset)
+            if (update == {}):
+                continue
+            last_update = weather_bot.get_last_update()
+        except Exception:
+            continue
+
+        last_update_id = last_update['update_id']
+        last_chat_text = last_update['message']['text']
+        last_chat_id = last_update['message']['chat']['id']
+        last_chat_name = last_update['message']['chat']['first_name']
+
+        if last_chat_text.split()[0] == '/cweather':
+            #           Анализируем полученное сообщение
+            #           Получаем основную информацию о погоде:
+            #           Если не распознался город надо выкинуть исключение
+            last_chat_text = last_chat_text.split()[1]
+            try:
+                inquiry = GetWeather(last_chat_text)
+            except Exception:
+                weather_bot.send_message(last_chat_id, errorMessage)
+                new_offset = last_update_id + 1
+                continue
+
+            #           Отправляем сообщения пользователю:
+            weather_msg = 'Weather: ' + inquiry['main_weather']
+            weather_bot.send_message(last_chat_id, weather_msg)
+
+            desc_msg = 'Description: ' + inquiry['description']
+            weather_bot.send_message(last_chat_id, desc_msg)
+
+            temp_msg = 'Temperature: ' + str(inquiry['temperature']) + ' Celsium'
+            weather_bot.send_message(last_chat_id, temp_msg)
+        elif last_chat_text.split()[0] == '/forecast':
+            print('blablabl')
+        elif last_chat_text == '/help':
+            weather_bot.send_message(last_chat_id, helpMessage)
+        else:
+            weather_bot.send_message(last_chat_id, 'Print /help to see my abilities')
+        new_offset = last_update_id + 1
+
+def GetWeather(city):
+    inquiry = dict()
+    url = "https://api.openweathermap.org/data/2.5/weather?q={}".format(city)
+    url = url + '&units=metric'
+    api_key = "&appid=81931327e738eed642cf6d54c2dc2ea0"
+    weather_request = requests.get(url+api_key)
+    weather_json = weather_request.json()['weather']
+    inquiry['main_weather'] = weather_json[0]['main']
+    inquiry['temperature'] = weather_request.json()['main']['temp']
+    inquiry['pressure'] = weather_request.json()['main']['pressure']
+    inquiry['description'] = weather_json[0]['description']
+    return inquiry
+
+if __name__ == '__main__':
+    main()
+
